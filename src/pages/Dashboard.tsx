@@ -21,6 +21,10 @@ import {
   ListItemSecondaryAction,
   Divider,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   Logout,
@@ -33,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useMessages';
+import { useServices } from '@/hooks/useServices';
 
 const placeholders = ['{{nome}}', '{{data}}', '{{servico}}'];
 
@@ -40,9 +45,10 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { messages, saveMessage, deleteMessage } = useMessages();
+  const { services } = useServices();
 
   const [nome, setNome] = useState('');
-  const [tipoServico, setTipoServico] = useState('');
+  const [servicoId, setServicoId] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
@@ -52,15 +58,18 @@ const Dashboard: React.FC = () => {
   };
 
   const handleSave = () => {
-    if (!nome.trim() || !tipoServico.trim() || !mensagem.trim()) {
+    if (!nome.trim() || !servicoId || !mensagem.trim()) {
       setSnackbar({ open: true, message: 'Preencha todos os campos', severity: 'error' });
       return;
     }
 
-    saveMessage(nome.trim(), tipoServico.trim(), mensagem.trim());
+    const selectedService = services.find(s => s.id === servicoId);
+    const servicoNome = selectedService?.nome || '';
+    
+    saveMessage(nome.trim(), servicoNome, mensagem.trim());
     setSnackbar({ open: true, message: 'Mensagem salva com sucesso!', severity: 'success' });
     setNome('');
-    setTipoServico('');
+    setServicoId('');
     setMensagem('');
   };
 
@@ -123,15 +132,24 @@ const Dashboard: React.FC = () => {
                 placeholder="Ex: Confirmação de Agendamento"
               />
 
-              <TextField
-                fullWidth
-                label="Tipo de Serviço"
-                value={tipoServico}
-                onChange={(e) => setTipoServico(e.target.value)}
-                sx={{ mb: 2 }}
-                placeholder="Ex: 0020"
-                helperText="Código identificador do serviço"
-              />
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Serviço</InputLabel>
+                <Select
+                  value={servicoId}
+                  label="Serviço"
+                  onChange={(e) => setServicoId(e.target.value)}
+                >
+                  {services.length === 0 ? (
+                    <MenuItem disabled>Nenhum serviço cadastrado</MenuItem>
+                  ) : (
+                    services.map((service) => (
+                      <MenuItem key={service.id} value={service.id}>
+                        {service.nome}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
 
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>

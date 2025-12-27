@@ -25,13 +25,11 @@ export const useServices = () => {
     }
   };
 
-  const saveService = (codigo: string, nome: string, descricao: string): Service => {
+  const saveService = (nome: string): Service => {
     const newService: Service = {
       id: crypto.randomUUID(),
       user_id: user?.id || '',
-      codigo,
       nome,
-      descricao,
       created_at: new Date().toISOString(),
     };
 
