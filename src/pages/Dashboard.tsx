@@ -27,6 +27,7 @@ import {
   Send,
   Save,
   Delete,
+  Build as BuildIcon,
   Message as MessageIcon,
   Info,
 } from '@mui/icons-material';
@@ -85,6 +86,14 @@ const Dashboard: React.FC = () => {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             MessageFlow
           </Typography>
+          <Button
+            color="inherit"
+            startIcon={<BuildIcon />}
+            onClick={() => navigate('/services')}
+            sx={{ mr: 2 }}
+          >
+            Serviços
+          </Button>
           <Typography variant="body2" sx={{ mr: 2, opacity: 0.9 }}>
             {user?.email}
           </Typography>
