@@ -16,7 +16,6 @@ import {
   Grid,
   Snackbar,
   Alert,
-  Chip,
 } from '@mui/material';
 import {
   Logout as LogoutIcon,
@@ -33,23 +32,19 @@ const Services = () => {
   const { user, logout } = useAuth();
   const { services, saveService, deleteService } = useServices();
 
-  const [codigo, setCodigo] = useState('');
   const [nome, setNome] = useState('');
-  const [descricao, setDescricao] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!codigo.trim() || !nome.trim()) {
-      setSnackbar({ open: true, message: 'Código e nome são obrigatórios', severity: 'error' });
+    if (!nome.trim()) {
+      setSnackbar({ open: true, message: 'Nome é obrigatório', severity: 'error' });
       return;
     }
 
-    saveService(codigo.trim(), nome.trim(), descricao.trim());
-    setCodigo('');
+    saveService(nome.trim());
     setNome('');
-    setDescricao('');
     setSnackbar({ open: true, message: 'Serviço salvo com sucesso!', severity: 'success' });
   };
 
@@ -100,33 +95,12 @@ const Services = () => {
               <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
                 <TextField
                   fullWidth
-                  label="Código do Serviço"
-                  value={codigo}
-                  onChange={(e) => setCodigo(e.target.value)}
-                  placeholder="Ex: 0020"
-                  sx={{ mb: 3 }}
-                  required
-                />
-                
-                <TextField
-                  fullWidth
                   label="Nome do Serviço"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Ex: Manutenção Preventiva"
                   sx={{ mb: 3 }}
                   required
-                />
-                
-                <TextField
-                  fullWidth
-                  label="Descrição"
-                  value={descricao}
-                  onChange={(e) => setDescricao(e.target.value)}
-                  placeholder="Descrição detalhada do serviço..."
-                  multiline
-                  rows={3}
-                  sx={{ mb: 3 }}
                 />
                 
                 <Button
@@ -161,22 +135,9 @@ const Services = () => {
                 {services.map((service) => (
                   <Card key={service.id} elevation={2}>
                     <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                        <Chip 
-                          label={service.codigo} 
-                          color="primary" 
-                          size="small"
-                          sx={{ fontWeight: 'bold' }}
-                        />
-                        <Typography variant="h6" component="span">
-                          {service.nome}
-                        </Typography>
-                      </Box>
-                      {service.descricao && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                          {service.descricao}
-                        </Typography>
-                      )}
+                      <Typography variant="h6" component="span">
+                        {service.nome}
+                      </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                         Criado em: {new Date(service.created_at).toLocaleDateString('pt-BR')}
                       </Typography>
