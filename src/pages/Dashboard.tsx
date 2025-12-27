@@ -34,6 +34,7 @@ import {
   Build as BuildIcon,
   Message as MessageIcon,
   Info,
+  Campaign as CampaignIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useMessages';
@@ -95,6 +96,14 @@ const Dashboard: React.FC = () => {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             MessageFlow
           </Typography>
+          <Button
+            color="inherit"
+            startIcon={<CampaignIcon />}
+            onClick={() => navigate('/mensagens-massa')}
+            sx={{ mr: 2 }}
+          >
+            Mensagens em Massa
+          </Button>
           <Button
             color="inherit"
             startIcon={<BuildIcon />}

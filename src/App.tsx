@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
+import MensagensMassa from "./pages/MensagensMassa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Services />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mensagens-massa"
+                element={
+                  <ProtectedRoute>
+                    <MensagensMassa />
                   </ProtectedRoute>
                 }
               />
