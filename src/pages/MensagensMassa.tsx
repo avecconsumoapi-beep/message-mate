@@ -126,26 +126,34 @@ const MensagensMassa = () => {
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const filePath = `messages/${fileName}`;
 
+  const uploadMediaToSupabase = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  
+    // pasta "messages" DENTRO do bucket
+    const filePath = `messages/${fileName}`;
+  
     const response = await fetch(
       `${SUPABASE_URL}/storage/v1/object/whatsapp-media/${filePath}`,
       {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          apikey: SUPABASE_ANON_KEY,
           'Content-Type': file.type,
-          'x-upsert': 'true',
         },
         body: file,
       }
     );
-
+  
     if (!response.ok) {
+      const error = await response.text();
+      console.error('Erro Supabase:', error);
       throw new Error('Falha ao fazer upload da mídia no Supabase');
     }
-
+  
     return `${SUPABASE_URL}/storage/v1/object/public/whatsapp-media/${filePath}`;
   };
+
 
   const handleEnviar = async () => {
     if (!mensagem.trim()) {
