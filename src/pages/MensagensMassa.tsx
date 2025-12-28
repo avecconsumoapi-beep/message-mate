@@ -120,6 +120,30 @@ const MensagensMassa = () => {
 
   const SUPABASE_URL = 'https://dtfnxkpcvnyrapiyjcbb.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Zm54a3Bjdm55cmFwaXlqY2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2NjUyOTksImV4cCI6MjA4MjI0MTI5OX0.QjpfNoZETz1xTTmr_tP7hlp_8YovQz_NAcbcvXgbBFg';
+  
+const sendToN8n = async (payload: any) => {
+  const N8N_WEBHOOK_URL = 'https://SEU_N8N/webhook-test/receive-message';
+
+  console.log('[N8N] Enviando payload:', payload);
+
+  const response = await fetch(N8N_WEBHOOK_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  console.log('[N8N] Resposta:', data);
+
+  if (!response.ok) {
+    throw new Error('Erro ao enviar para o n8n');
+  }
+
+  return data;
+};
 
 const uploadMediaToSupabase = async (file: File): Promise<string> => {
   console.log('[UPLOAD] Início do upload');
@@ -209,8 +233,10 @@ const uploadMediaToSupabase = async (file: File): Promise<string> => {
         },
         phones: phones,
       };
+      
+      await sendToN8n(payload);
 
-      console.log('Payload to send:', payload);
+
 
       // TODO: Replace with actual webhook/backend endpoint
       // const response = await fetch('YOUR_WEBHOOK_ENDPOINT', {
