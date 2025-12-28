@@ -122,7 +122,7 @@ const MensagensMassa = () => {
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Zm54a3Bjdm55cmFwaXlqY2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2NjUyOTksImV4cCI6MjA4MjI0MTI5OX0.QjpfNoZETz1xTTmr_tP7hlp_8YovQz_NAcbcvXgbBFg';
   
 const sendToN8n = async (payload: any) => {
-  const N8N_WEBHOOK_URL = 'https://SEU_N8N/webhook-test/receive-message';
+  const N8N_WEBHOOK_URL = 'https://primary-production-c139e.up.railway.app/webhook-test/receive-message';
 
   console.log('[N8N] Enviando payload:', payload);
 
