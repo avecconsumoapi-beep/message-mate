@@ -121,38 +121,50 @@ const MensagensMassa = () => {
   const SUPABASE_URL = 'https://dtfnxkpcvnyrapiyjcbb.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Zm54a3Bjdm55cmFwaXlqY2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUzMjY0NTksImV4cCI6MjA1MDkwMjQ1OX0.placeholder';
 
-    const uploadMediaToSupabase = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `messages/${fileName}`;
+const uploadMediaToSupabase = async (file: File): Promise<string> => {
+  console.log('[UPLOAD] Início do upload');
+  console.log('[UPLOAD] File:', {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  });
 
-  const uploadMediaToSupabase = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-  
-    // pasta "messages" DENTRO do bucket
-    const filePath = `messages/${fileName}`;
-  
-    const response = await fetch(
-      `${SUPABASE_URL}/storage/v1/object/whatsapp-media/${filePath}`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': file.type,
-        },
-        body: file,
-      }
-    );
-  
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Erro Supabase:', error);
-      throw new Error('Falha ao fazer upload da mídia no Supabase');
-    }
-  
-    return `${SUPABASE_URL}/storage/v1/object/public/whatsapp-media/${filePath}`;
-  };
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  const filePath = `messages/${fileName}`;
+
+  console.log('[UPLOAD] Bucket:', 'whatsapp-media');
+  console.log('[UPLOAD] FilePath:', filePath);
+
+  const url = `${SUPABASE_URL}/storage/v1/object/whatsapp-media/${filePath}`;
+  console.log('[UPLOAD] URL:', url);
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': file.type,
+    },
+    body: file,
+  });
+
+  console.log('[UPLOAD] Response status:', response.status);
+  console.log('[UPLOAD] Response ok:', response.ok);
+
+  const responseText = await response.text();
+  console.log('[UPLOAD] Response body:', responseText);
+
+  if (!response.ok) {
+    throw new Error('Falha ao fazer upload da mídia no Supabase');
+  }
+
+  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/whatsapp-media/${filePath}`;
+  console.log('[UPLOAD] Upload concluído com sucesso');
+  console.log('[UPLOAD] Public URL:', publicUrl);
+
+  return publicUrl;
+};
+
 
 
   const handleEnviar = async () => {
