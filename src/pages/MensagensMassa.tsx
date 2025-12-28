@@ -118,20 +118,32 @@ const MensagensMassa = () => {
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
+  const SUPABASE_URL = 'https://dtfnxkpcvnyrapiyjcbb.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Zm54a3Bjdm55cmFwaXlqY2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUzMjY0NTksImV4cCI6MjA1MDkwMjQ1OX0.placeholder';
+
+  const uploadMediaToSupabase = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `whatsapp-media/${fileName}`;
+
+    const response = await fetch(`${SUPABASE_URL}/storage/v1/object/whatsapp-media/${fileName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': file.type,
+        'x-upsert': 'true',
+      },
+      body: file,
     });
+
+    if (!response.ok) {
+      throw new Error('Falha ao fazer upload da mídia');
+    }
+
+    return `${SUPABASE_URL}/storage/v1/object/public/whatsapp-media/${fileName}`;
   };
 
   const handleEnviar = async () => {
-    if (!titulo.trim()) {
-      toast({ title: 'Erro', description: 'Digite um título para a mensagem', variant: 'destructive' });
-      return;
-    }
     if (!mensagem.trim()) {
       toast({ title: 'Erro', description: 'Digite uma mensagem', variant: 'destructive' });
       return;
@@ -147,9 +159,9 @@ const MensagensMassa = () => {
       let mediaUrl: string | null = null;
       let mediaType: 'image' | 'video' | null = null;
 
-      // Convert media to base64 for backend to handle
+      // Upload media to Supabase Storage
       if (media) {
-        mediaUrl = await fileToBase64(media.file);
+        mediaUrl = await uploadMediaToSupabase(media.file);
         mediaType = media.type;
       }
 
@@ -157,7 +169,7 @@ const MensagensMassa = () => {
         job_id: crypto.randomUUID(),
         message: {
           id: crypto.randomUUID(),
-          title: titulo,
+          title: titulo.trim() || null,
           text: mensagem,
           media_url: mediaUrl,
           media_type: mediaType,
@@ -167,14 +179,17 @@ const MensagensMassa = () => {
 
       console.log('Payload to send:', payload);
 
-      // TODO: Replace with actual API endpoint
-      // const response = await fetch('YOUR_API_ENDPOINT', {
+      // TODO: Replace with actual webhook/backend endpoint
+      // const response = await fetch('YOUR_WEBHOOK_ENDPOINT', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(payload),
       // });
 
-      toast({ title: 'Sucesso', description: `Mensagem preparada para ${phones.length} contatos!` });
+      toast({ 
+        title: 'Sucesso', 
+        description: `Mensagem preparada para ${phones.length} contatos${media ? ` com ${media.type === 'image' ? 'imagem' : 'vídeo'}` : ''}!` 
+      });
       
       // Reset form
       setTitulo('');
