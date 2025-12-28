@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -7,9 +6,6 @@ import {
   Typography,
   TextField,
   Button,
-  AppBar,
-  Toolbar,
-  IconButton,
   Card,
   CardContent,
   CardActions,
@@ -18,18 +14,14 @@ import {
   Alert,
 } from '@mui/material';
 import {
-  Logout as LogoutIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
-  Message as MessageIcon,
   Build as BuildIcon,
 } from '@mui/icons-material';
-import { useAuth } from '@/contexts/AuthContext';
 import { useServices } from '@/hooks/useServices';
+import AppLayout from '@/components/AppLayout';
 
 const Services = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const { services, saveService, deleteService } = useServices();
 
   const [nome, setNome] = useState('');
@@ -53,37 +45,13 @@ const Services = () => {
     setSnackbar({ open: true, message: 'Serviço excluído!', severity: 'success' });
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
-        <Toolbar>
-          <BuildIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Gerenciar Serviços
-          </Typography>
-          <Button
-            color="inherit"
-            startIcon={<MessageIcon />}
-            onClick={() => navigate('/dashboard')}
-            sx={{ mr: 2 }}
-          >
-            Mensagens
-          </Button>
-          <Typography variant="body2" sx={{ mr: 2 }}>
-            {user?.email}
-          </Typography>
-          <IconButton color="inherit" onClick={handleLogout}>
-            <LogoutIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
+    <AppLayout>
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: 'hsl(var(--foreground))', mb: 4 }}>
+          Gerenciar Serviços
+        </Typography>
+
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, md: 5 }}>
             <Paper elevation={3} sx={{ p: 4 }}>
@@ -174,7 +142,7 @@ const Services = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </AppLayout>
   );
 };
 

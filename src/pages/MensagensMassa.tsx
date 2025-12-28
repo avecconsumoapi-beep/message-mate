@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import { 
   Box, 
   Container, 
@@ -11,28 +11,42 @@ import {
   Popover,
   Card,
   CardMedia,
+  Chip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import ContactsIcon from '@mui/icons-material/Contacts';
 import { useToast } from '@/hooks/use-toast';
+import AppLayout from '@/components/AppLayout';
+import { parseAndNormalizePhones } from '@/utils/phoneUtils';
 
 const EMOJIS = ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '👍', '👎', '👏', '🙌', '🤝', '💪', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💯', '✅', '⭐', '🔥', '🎉', '🎊'];
 
 const MensagensMassa = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const excelInputRef = useRef<HTMLInputElement>(null);
   
   const [titulo, setTitulo] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [media, setMedia] = useState<{ file: File; type: 'image' | 'video'; preview: string } | null>(null);
-  const [emojiAnchor, setEmojiAnchor] = useState<HTMLButtonElement | null>(null);
+  const [tituloEmojiAnchor, setTituloEmojiAnchor] = useState<HTMLButtonElement | null>(null);
+  const [mensagemEmojiAnchor, setMensagemEmojiAnchor] = useState<HTMLButtonElement | null>(null);
+  const [phones, setPhones] = useState<string[]>([]);
+  const [excelFileName, setExcelFileName] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
-  const handleEmojiClick = (emoji: string) => {
+  const handleTituloEmojiClick = (emoji: string) => {
+    setTitulo(prev => prev + emoji);
+  };
+
+  const handleMensagemEmojiClick = (emoji: string) => {
     setMensagem(prev => prev + emoji);
   };
 
@@ -51,7 +65,69 @@ const MensagensMassa = () => {
     }
   };
 
-  const handleEnviar = () => {
+  const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
+
+      // Check if 'phone' column exists
+      if (jsonData.length > 0) {
+        const hasPhoneColumn = Object.keys(jsonData[0]).some(
+          key => key.toLowerCase() === 'phone'
+        );
+        
+        if (!hasPhoneColumn) {
+          toast({ 
+            title: 'Erro', 
+            description: 'O arquivo deve conter uma coluna chamada "phone"', 
+            variant: 'destructive' 
+          });
+          return;
+        }
+      }
+
+      const normalizedPhones = parseAndNormalizePhones(jsonData);
+      setPhones(normalizedPhones);
+      setExcelFileName(file.name);
+      
+      toast({ 
+        title: 'Sucesso', 
+        description: `${normalizedPhones.length} contatos carregados (duplicados removidos)` 
+      });
+    } catch (error) {
+      console.error('Error parsing Excel:', error);
+      toast({ 
+        title: 'Erro', 
+        description: 'Erro ao processar o arquivo Excel', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
+  const handleRemoveContacts = () => {
+    setPhones([]);
+    setExcelFileName('');
+    if (excelInputRef.current) {
+      excelInputRef.current.value = '';
+    }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+  };
+
+  const handleEnviar = async () => {
     if (!titulo.trim()) {
       toast({ title: 'Erro', description: 'Digite um título para a mensagem', variant: 'destructive' });
       return;
@@ -60,41 +136,115 @@ const MensagensMassa = () => {
       toast({ title: 'Erro', description: 'Digite uma mensagem', variant: 'destructive' });
       return;
     }
+    if (phones.length === 0) {
+      toast({ title: 'Erro', description: 'Faça upload de um arquivo Excel com contatos', variant: 'destructive' });
+      return;
+    }
 
-    // Aqui você pode implementar a lógica de envio
-    console.log({ titulo, mensagem, media: media?.file });
-    
-    toast({ title: 'Sucesso', description: 'Mensagem preparada para envio em massa!' });
-    
-    // Limpar campos
-    setTitulo('');
-    setMensagem('');
-    handleRemoveMedia();
+    setLoading(true);
+
+    try {
+      let mediaUrl: string | null = null;
+      let mediaType: 'image' | 'video' | null = null;
+
+      // Convert media to base64 for backend to handle
+      if (media) {
+        mediaUrl = await fileToBase64(media.file);
+        mediaType = media.type;
+      }
+
+      const payload = {
+        job_id: crypto.randomUUID(),
+        message: {
+          id: crypto.randomUUID(),
+          title: titulo,
+          text: mensagem,
+          media_url: mediaUrl,
+          media_type: mediaType,
+        },
+        phones: phones,
+      };
+
+      console.log('Payload to send:', payload);
+
+      // TODO: Replace with actual API endpoint
+      // const response = await fetch('YOUR_API_ENDPOINT', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(payload),
+      // });
+
+      toast({ title: 'Sucesso', description: `Mensagem preparada para ${phones.length} contatos!` });
+      
+      // Reset form
+      setTitulo('');
+      setMensagem('');
+      handleRemoveMedia();
+      handleRemoveContacts();
+    } catch (error) {
+      console.error('Error sending:', error);
+      toast({ title: 'Erro', description: 'Erro ao preparar envio', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'hsl(var(--background))', py: 4 }}>
-      <Container maxWidth="md">
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
-          <IconButton onClick={() => navigate('/dashboard')} sx={{ color: 'hsl(var(--foreground))' }}>
-            <ArrowBackIcon />
+  const EmojiPopover = ({ 
+    anchor, 
+    onClose, 
+    onSelect 
+  }: { 
+    anchor: HTMLButtonElement | null; 
+    onClose: () => void; 
+    onSelect: (emoji: string) => void;
+  }) => (
+    <Popover
+      open={Boolean(anchor)}
+      anchorEl={anchor}
+      onClose={onClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+    >
+      <Box sx={{ p: 2, maxWidth: 320, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+        {EMOJIS.map((emoji, index) => (
+          <IconButton 
+            key={index} 
+            onClick={() => onSelect(emoji)}
+            sx={{ fontSize: '1.5rem', p: 0.5 }}
+          >
+            {emoji}
           </IconButton>
-          <Typography variant="h4" sx={{ color: 'hsl(var(--foreground))', fontWeight: 700 }}>
-            Mensagens em Massa - WhatsApp
-          </Typography>
-        </Box>
+        ))}
+      </Box>
+    </Popover>
+  );
+
+  return (
+    <AppLayout>
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Typography variant="h4" sx={{ color: 'hsl(var(--foreground))', fontWeight: 700, mb: 4 }}>
+          Mensagens em Massa - WhatsApp
+        </Typography>
 
         <Paper sx={{ p: 4, bgcolor: 'hsl(var(--card))', borderRadius: 3 }}>
-          {/* Título com destaque */}
+          {/* Título com destaque e emoji */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ color: 'hsl(var(--foreground))', mb: 1, fontWeight: 600 }}>
-              Título da Mensagem
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="subtitle1" sx={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}>
+                Título da Mensagem
+              </Typography>
+              <IconButton 
+                onClick={(e) => setTituloEmojiAnchor(e.currentTarget)}
+                sx={{ color: 'hsl(var(--primary))' }}
+              >
+                <EmojiEmotionsIcon />
+              </IconButton>
+            </Box>
             <TextField
               fullWidth
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Digite o título em destaque..."
+              placeholder="Digite o título em destaque... 🎉"
               sx={{
                 '& .MuiOutlinedInput-root': {
                   bgcolor: 'hsl(var(--background))',
@@ -109,6 +259,11 @@ const MensagensMassa = () => {
                 },
               }}
             />
+            <EmojiPopover 
+              anchor={tituloEmojiAnchor} 
+              onClose={() => setTituloEmojiAnchor(null)} 
+              onSelect={handleTituloEmojiClick} 
+            />
           </Box>
 
           {/* Mensagem com emojis */}
@@ -118,7 +273,7 @@ const MensagensMassa = () => {
                 Mensagem
               </Typography>
               <IconButton 
-                onClick={(e) => setEmojiAnchor(e.currentTarget)}
+                onClick={(e) => setMensagemEmojiAnchor(e.currentTarget)}
                 sx={{ color: 'hsl(var(--primary))' }}
               >
                 <EmojiEmotionsIcon />
@@ -143,33 +298,61 @@ const MensagensMassa = () => {
                 },
               }}
             />
+            <EmojiPopover 
+              anchor={mensagemEmojiAnchor} 
+              onClose={() => setMensagemEmojiAnchor(null)} 
+              onSelect={handleMensagemEmojiClick} 
+            />
+          </Box>
+
+          {/* Upload de Contatos Excel */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ color: 'hsl(var(--foreground))', mb: 2, fontWeight: 600 }}>
+              Lista de Contatos (Excel)
+            </Typography>
             
-            {/* Popover de Emojis */}
-            <Popover
-              open={Boolean(emojiAnchor)}
-              anchorEl={emojiAnchor}
-              onClose={() => setEmojiAnchor(null)}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-              <Box sx={{ p: 2, maxWidth: 320, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {EMOJIS.map((emoji, index) => (
-                  <IconButton 
-                    key={index} 
-                    onClick={() => handleEmojiClick(emoji)}
-                    sx={{ fontSize: '1.5rem', p: 0.5 }}
-                  >
-                    {emoji}
-                  </IconButton>
-                ))}
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              hidden
+              ref={excelInputRef}
+              onChange={handleExcelUpload}
+            />
+
+            {phones.length === 0 ? (
+              <Button
+                variant="outlined"
+                startIcon={<UploadFileIcon />}
+                onClick={() => excelInputRef.current?.click()}
+                sx={{
+                  borderColor: 'hsl(var(--border))',
+                  color: 'hsl(var(--foreground))',
+                  '&:hover': { borderColor: 'hsl(var(--primary))', bgcolor: 'hsl(var(--accent))' },
+                }}
+              >
+                Carregar Excel com coluna "phone"
+              </Button>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Chip
+                  icon={<ContactsIcon />}
+                  label={`${phones.length} contatos - ${excelFileName}`}
+                  color="primary"
+                  onDelete={handleRemoveContacts}
+                />
               </Box>
-            </Popover>
+            )}
+
+            <Alert severity="info" sx={{ mt: 2 }}>
+              O arquivo Excel deve conter uma coluna chamada <strong>"phone"</strong>. 
+              Os números serão normalizados para o formato DDI+DDD+número e duplicados serão removidos.
+            </Alert>
           </Box>
 
           {/* Upload de Mídia */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="subtitle1" sx={{ color: 'hsl(var(--foreground))', mb: 2, fontWeight: 600 }}>
-              Adicionar Mídia
+              Adicionar Mídia (opcional)
             </Typography>
             
             {!media ? (
@@ -255,8 +438,9 @@ const MensagensMassa = () => {
             fullWidth
             variant="contained"
             size="large"
-            startIcon={<SendIcon />}
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
             onClick={handleEnviar}
+            disabled={loading}
             sx={{
               bgcolor: '#25D366',
               color: '#fff',
@@ -264,13 +448,14 @@ const MensagensMassa = () => {
               fontSize: '1.1rem',
               fontWeight: 600,
               '&:hover': { bgcolor: '#128C7E' },
+              '&:disabled': { bgcolor: '#25D366', opacity: 0.7 },
             }}
           >
-            Preparar Envio em Massa
+            {loading ? 'Preparando...' : 'Enviar em Massa'}
           </Button>
         </Paper>
       </Container>
-    </Box>
+    </AppLayout>
   );
 };
 
