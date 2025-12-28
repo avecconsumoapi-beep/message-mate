@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
   Container,
   Card,
   CardContent,
@@ -25,26 +20,22 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Typography,
+  IconButton,
 } from '@mui/material';
 import {
-  Logout,
-  Send,
   Save,
   Delete,
-  Build as BuildIcon,
   Message as MessageIcon,
   Info,
-  Campaign as CampaignIcon,
 } from '@mui/icons-material';
-import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useMessages';
 import { useServices } from '@/hooks/useServices';
+import AppLayout from '@/components/AppLayout';
 
 const placeholders = ['{{nome}}', '{{data}}', '{{servico}}'];
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const { messages, saveMessage, deleteMessage } = useMessages();
   const { services } = useServices();
 
@@ -52,11 +43,6 @@ const Dashboard: React.FC = () => {
   const [servicoId, setServicoId] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
 
   const handleSave = () => {
     if (!nome.trim() || !servicoId || !mensagem.trim()) {
@@ -84,44 +70,12 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f7fa' }}>
-      <AppBar
-        position="static"
-        sx={{
-          background: 'linear-gradient(135deg, #0d9488, #0891b2)',
-        }}
-      >
-        <Toolbar>
-          <Send sx={{ mr: 2 }} />
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            MessageFlow
-          </Typography>
-          <Button
-            color="inherit"
-            startIcon={<CampaignIcon />}
-            onClick={() => navigate('/mensagens-massa')}
-            sx={{ mr: 2 }}
-          >
-            Mensagens em Massa
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<BuildIcon />}
-            onClick={() => navigate('/services')}
-            sx={{ mr: 2 }}
-          >
-            Serviços
-          </Button>
-          <Typography variant="body2" sx={{ mr: 2, opacity: 0.9 }}>
-            {user?.email}
-          </Typography>
-          <IconButton color="inherit" onClick={handleLogout}>
-            <Logout />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
+    <AppLayout>
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: 'hsl(var(--foreground))', mb: 4 }}>
+          Dashboard
+        </Typography>
+        
         <Box sx={{ display: 'grid', gap: 4, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
           {/* Form Card */}
           <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
@@ -305,7 +259,7 @@ const Dashboard: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </AppLayout>
   );
 };
 
