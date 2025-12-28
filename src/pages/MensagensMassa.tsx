@@ -157,6 +157,15 @@ const MensagensMassa = () => {
       return;
     }
 
+    if (media && media.file.size > 16 * 1024 * 1024) {
+      toast({
+        title: 'Erro',
+        description: 'A mídia deve ter no máximo 16MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
