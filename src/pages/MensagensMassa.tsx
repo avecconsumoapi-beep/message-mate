@@ -121,26 +121,30 @@ const MensagensMassa = () => {
   const SUPABASE_URL = 'https://dtfnxkpcvnyrapiyjcbb.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Zm54a3Bjdm55cmFwaXlqY2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUzMjY0NTksImV4cCI6MjA1MDkwMjQ1OX0.placeholder';
 
-  const uploadMediaToSupabase = async (file: File): Promise<string> => {
+    const uploadMediaToSupabase = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `whatsapp-media/${fileName}`;
+    const filePath = `messages/${fileName}`;
 
-    const response = await fetch(`${SUPABASE_URL}/storage/v1/object/whatsapp-media/${fileName}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': file.type,
-        'x-upsert': 'true',
-      },
-      body: file,
-    });
+    const response = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/whatsapp-media/${filePath}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          apikey: SUPABASE_ANON_KEY,
+          'Content-Type': file.type,
+          'x-upsert': 'true',
+        },
+        body: file,
+      }
+    );
 
     if (!response.ok) {
-      throw new Error('Falha ao fazer upload da mídia');
+      throw new Error('Falha ao fazer upload da mídia no Supabase');
     }
 
-    return `${SUPABASE_URL}/storage/v1/object/public/whatsapp-media/${fileName}`;
+    return `${SUPABASE_URL}/storage/v1/object/public/whatsapp-media/${filePath}`;
   };
 
   const handleEnviar = async () => {
