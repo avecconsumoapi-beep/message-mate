@@ -121,28 +121,52 @@ const MensagensMassa = () => {
   const SUPABASE_URL = 'https://dtfnxkpcvnyrapiyjcbb.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Zm54a3Bjdm55cmFwaXlqY2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2NjUyOTksImV4cCI6MjA4MjI0MTI5OX0.QjpfNoZETz1xTTmr_tP7hlp_8YovQz_NAcbcvXgbBFg';
   
-const sendToN8n = async (payload: any) => {
-  const N8N_WEBHOOK_URL = 'https://primary-production-c139e.up.railway.app/webhook/receive-message';
+const sendToN8n = async (payload: unknown) => {
+  const N8N_WEBHOOK_URL =
+    'https://primary-production-c139e.up.railway.app/webhook/receive-message';
 
   console.log('[N8N] Enviando payload:', payload);
 
-  const response = await fetch(N8N_WEBHOOK_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s
 
-  const data = await response.json();
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
 
-  console.log('[N8N] Resposta:', data);
+    clearTimeout(timeout);
 
-  if (!response.ok) {
-    throw new Error('Erro ao enviar para o n8n');
+    let data: any = null;
+
+    // Evita erro caso não venha JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+
+    console.log('[N8N] Status:', response.status);
+    console.log('[N8N] Resposta:', data);
+
+    if (!response.ok) {
+      throw new Error(
+        `Erro ao enviar para o n8n (${response.status})`
+      );
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error('[N8N] Falha no envio:', error.message);
+
+    throw new Error('Não foi possível comunicar com o n8n');
   }
-
-  return data;
 };
 
 const uploadMediaToSupabase = async (file: File): Promise<string> => {
