@@ -123,7 +123,7 @@ const MensagensMassa = () => {
   
 const sendToN8n = async (payload: unknown) => {
   const N8N_WEBHOOK_URL =
-    'https://primary-production-c139e.up.railway.app/webhook-test/receive-message';
+    'https://primary-production-c139e.up.railway.app/webhook/receive-message';
 
   console.log('[N8N] Enviando payload:', payload);
 
