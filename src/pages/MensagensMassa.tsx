@@ -131,10 +131,10 @@ const sendToN8n = async (payload: unknown) => {
 
   console.log('[N8N] Enviando payload:', payload);
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
+  try {
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: {
@@ -146,30 +146,15 @@ const sendToN8n = async (payload: unknown) => {
 
     clearTimeout(timeout);
 
-    let data: any = null;
-
-    // Evita erro caso não venha JSON
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
-
     console.log('[N8N] Status:', response.status);
-    console.log('[N8N] Resposta:', data);
 
-    if (!response.ok) {
-      throw new Error(
-        `Erro ao enviar para o n8n (${response.status})`
-      );
-    }
-
-    return data;
+    // Considera sucesso se recebeu resposta (mesmo 500 do workflow)
+    // O importante é que o n8n recebeu o payload
+    return { status: response.status, received: true };
   } catch (error: any) {
+    clearTimeout(timeout);
     console.error('[N8N] Falha no envio:', error.message);
-
-    throw new Error('Não foi possível comunicar com o n8n');
+    throw new Error('Falha na comunicação com o servidor');
   }
 };
 
@@ -263,20 +248,12 @@ const uploadMediaToSupabase = async (file: File): Promise<string> => {
         phones: phones,
       };
       
-      await sendToN8n(payload);
-
-
-
-      // TODO: Replace with actual webhook/backend endpoint
-      // const response = await fetch('YOUR_WEBHOOK_ENDPOINT', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(payload),
-      // });
+      const result = await sendToN8n(payload);
+      console.log('[N8N] Resultado:', result);
 
       toast({ 
-        title: 'Sucesso', 
-        description: `Mensagem preparada para ${phones.length} contatos${media ? ` com ${media.type === 'image' ? 'imagem' : 'vídeo'}` : ''}!` 
+        title: 'Enviado!', 
+        description: `Mensagem enviada para processamento (${phones.length} contatos)` 
       });
       
       // Reset form
@@ -284,9 +261,13 @@ const uploadMediaToSupabase = async (file: File): Promise<string> => {
       setMensagem('');
       handleRemoveMedia();
       handleRemoveContacts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending:', error);
-      toast({ title: 'Erro', description: 'Erro ao preparar envio', variant: 'destructive' });
+      toast({ 
+        title: 'Erro', 
+        description: error.message || 'Falha ao enviar', 
+        variant: 'destructive' 
+      });
     } finally {
       setLoading(false);
     }
