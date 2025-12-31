@@ -12,41 +12,59 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock, Send } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Lock, Send } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 
-const Login: React.FC = () => {
+const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
-  const { login, user, loading: authLoading } = useAuth();
+  const { updatePassword, session } = useAuth();
   
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) {
-      navigate('/dashboard');
+    // Check if user came from password reset email
+    if (!session) {
+      // Give a moment for auth to load
+      const timer = setTimeout(() => {
+        if (!session) {
+          setError('Link inválido ou expirado. Solicite um novo link de recuperação.');
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
     }
-  }, [user, authLoading, navigate]);
+  }, [session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
     setLoading(true);
 
-    const result = await login(email, password);
+    const result = await updatePassword(password);
     
     if (result.error) {
       setError(result.error);
       setLoading(false);
     } else {
-      navigate('/dashboard');
+      setSuccess(true);
+      setLoading(false);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
     }
   };
 
-  if (authLoading) {
+  if (success) {
     return (
       <Box
         sx={{
@@ -55,9 +73,20 @@ const Login: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #0284c7 100%)',
+          padding: 2,
         }}
       >
-        <CircularProgress sx={{ color: 'white' }} />
+        <Card sx={{ maxWidth: 420, width: '100%', borderRadius: 3 }}>
+          <CardContent sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h5" fontWeight="bold" color="success.main" gutterBottom>
+              Senha alterada!
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Redirecionando para o dashboard...
+            </Typography>
+            <CircularProgress sx={{ mt: 2 }} />
+          </CardContent>
+        </Card>
       </Box>
     );
   }
@@ -98,10 +127,10 @@ const Login: React.FC = () => {
               <Send sx={{ fontSize: 32, color: 'white' }} />
             </Box>
             <Typography variant="h4" fontWeight="bold" color="text.primary">
-              MessageFlow
+              Nova Senha
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Sistema de Mensagens Automatizadas
+              Digite sua nova senha
             </Typography>
           </Box>
 
@@ -114,24 +143,7 @@ const Login: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              sx={{ mb: 2 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email color="action" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label="Senha"
+              label="Nova Senha"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -145,10 +157,7 @@ const Login: React.FC = () => {
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -156,14 +165,22 @@ const Login: React.FC = () => {
               }}
             />
 
-            <Box sx={{ textAlign: 'right', mb: 2 }}>
-              <Link 
-                to="/forgot-password" 
-                style={{ color: '#0d9488', textDecoration: 'none', fontSize: '0.875rem' }}
-              >
-                Esqueceu a senha?
-              </Link>
-            </Box>
+            <TextField
+              fullWidth
+              label="Confirmar Nova Senha"
+              type={showPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              sx={{ mb: 3 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
 
             <Button
               type="submit"
@@ -179,11 +196,7 @@ const Login: React.FC = () => {
                 },
               }}
             >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Entrar'
-              )}
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Redefinir Senha'}
             </Button>
           </form>
 
@@ -192,9 +205,8 @@ const Login: React.FC = () => {
             color="text.secondary"
             sx={{ display: 'block', textAlign: 'center', mt: 3 }}
           >
-            Não tem uma conta?{' '}
-            <Link to="/signup" style={{ color: '#0d9488', textDecoration: 'none', fontWeight: 'bold' }}>
-              Cadastre-se
+            <Link to="/" style={{ color: '#0d9488', textDecoration: 'none', fontWeight: 'bold' }}>
+              Voltar ao Login
             </Link>
           </Typography>
         </CardContent>
@@ -203,4 +215,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default ResetPassword;
