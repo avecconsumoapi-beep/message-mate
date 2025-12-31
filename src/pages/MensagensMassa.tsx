@@ -14,6 +14,10 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import ImageIcon from '@mui/icons-material/Image';
@@ -41,6 +45,7 @@ const MensagensMassa = () => {
   const [phones, setPhones] = useState<string[]>([]);
   const [excelFileName, setExcelFileName] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [instancia, setInstancia] = useState<'instancia1' | 'instancia2'>('instancia1');
 
   const handleTituloEmojiClick = (emoji: string) => {
     setTitulo(prev => prev + emoji);
@@ -118,12 +123,11 @@ const MensagensMassa = () => {
     }
   };
 
-  const SUPABASE_URL = 'https://dtfnxkpcvnyrapiyjcbb.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Zm54a3Bjdm55cmFwaXlqY2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2NjUyOTksImV4cCI6MjA4MjI0MTI5OX0.QjpfNoZETz1xTTmr_tP7hlp_8YovQz_NAcbcvXgbBFg';
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
   
 const sendToN8n = async (payload: unknown) => {
-  const N8N_WEBHOOK_URL =
-    'https://primary-production-c139e.up.railway.app/webhook/receive-message';
+  const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
   console.log('[N8N] Enviando payload:', payload);
 
@@ -248,6 +252,7 @@ const uploadMediaToSupabase = async (file: File): Promise<string> => {
 
       const payload = {
         job_id: crypto.randomUUID(),
+        instancia: instancia,
         message: {
           id: crypto.randomUUID(),
           title: titulo.trim() || null,
@@ -325,7 +330,35 @@ const uploadMediaToSupabase = async (file: File): Promise<string> => {
         </Typography>
 
         <Paper sx={{ p: 4, bgcolor: 'hsl(var(--card))', borderRadius: 3 }}>
-          {/* Título com destaque e emoji */}
+          {/* Seleção de Instância */}
+          <Box sx={{ mb: 3 }}>
+            <FormControl fullWidth>
+              <InputLabel 
+                id="instancia-label"
+                sx={{ color: 'hsl(var(--foreground))' }}
+              >
+                Selecionar Instância
+              </InputLabel>
+              <Select
+                labelId="instancia-label"
+                value={instancia}
+                label="Selecionar Instância"
+                onChange={(e) => setInstancia(e.target.value as 'instancia1' | 'instancia2')}
+                sx={{
+                  bgcolor: 'hsl(var(--background))',
+                  color: 'hsl(var(--foreground))',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'hsl(var(--border))' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'hsl(var(--primary))' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'hsl(var(--primary))' },
+                }}
+              >
+                <MenuItem value="instancia1">Instância 1</MenuItem>
+                <MenuItem value="instancia2">Instância 2</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Título da Mensagem */}
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="subtitle1" sx={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}>
