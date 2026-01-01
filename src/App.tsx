@@ -12,6 +12,7 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import Servicos from "./pages/Servicos";
 import MensagensMassa from "./pages/MensagensMassa";
 import NotFound from "./pages/NotFound";
 
@@ -76,6 +77,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/servicos"
+                element={
+                  <ProtectedRoute>
+                    <Servicos />
                   </ProtectedRoute>
                 }
               />
