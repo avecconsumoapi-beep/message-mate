@@ -33,7 +33,6 @@ interface AppSidebarProps {
 
 const menuItems = [
   { title: 'Dashboard', path: '/dashboard', icon: DashboardIcon },
-  { title: 'Serviços', path: '/services', icon: BuildIcon },
   { title: 'Mensagens em Massa', path: '/mensagens-massa', icon: CampaignIcon },
 ];
 
