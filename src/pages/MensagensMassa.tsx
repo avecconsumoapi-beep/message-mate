@@ -24,6 +24,9 @@ import {
   Divider,
   Tooltip,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from '@mui/material';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import ImageIcon from '@mui/icons-material/Image';
@@ -33,10 +36,13 @@ import SendIcon from '@mui/icons-material/Send';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import ContactsIcon from '@mui/icons-material/Contacts';
 import HistoryIcon from '@mui/icons-material/History';
+import CloseIcon from '@mui/icons-material/Close';
+import PhoneIcon from '@mui/icons-material/Phone';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/components/AppLayout';
 import { parseAndNormalizePhones } from '@/utils/phoneUtils';
 import { useMensagensMassa } from '@/hooks/useMensagensMassa';
+import { MensagemMassa } from '@/types/MensagemMassa';
 import { supabase } from '@/lib/supabase';
 
 const EMOJIS = ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '👍', '👎', '👏', '🙌', '🤝', '💪', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💯', '✅', '⭐', '🔥', '🎉', '🎊'];
@@ -65,6 +71,7 @@ const MensagensMassa = () => {
   const [excelFileName, setExcelFileName] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [instancia, setInstancia] = useState<'instancia1' | 'instancia2'>('instancia1');
+  const [selectedMensagem, setSelectedMensagem] = useState<MensagemMassa | null>(null);
 
   const handleTituloEmojiClick = (emoji: string) => {
     setTitulo(prev => prev + emoji);
@@ -626,6 +633,7 @@ const MensagensMassa = () => {
                 {mensagens.map((msg) => (
                   <ListItem
                     key={msg.id}
+                    onClick={() => setSelectedMensagem(msg)}
                     sx={{
                       bgcolor: 'hsl(var(--background))',
                       borderRadius: 2,
@@ -633,6 +641,11 @@ const MensagensMassa = () => {
                       border: '1px solid hsl(var(--border))',
                       flexDirection: 'column',
                       alignItems: 'flex-start',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      '&:hover': {
+                        bgcolor: 'hsl(var(--accent))',
+                      },
                     }}
                   >
                     <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -680,7 +693,10 @@ const MensagensMassa = () => {
                         <IconButton
                           size="small"
                           color="error"
-                          onClick={() => handleDeleteMensagem(msg.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteMensagem(msg.id);
+                          }}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -692,6 +708,150 @@ const MensagensMassa = () => {
             )}
           </Paper>
         </Box>
+
+        {/* Modal de Detalhes */}
+        <Dialog 
+          open={!!selectedMensagem} 
+          onClose={() => setSelectedMensagem(null)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              bgcolor: 'hsl(var(--card))',
+              color: 'hsl(var(--foreground))',
+              maxHeight: '90vh',
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            borderBottom: '1px solid hsl(var(--border))',
+            pb: 2,
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <HistoryIcon sx={{ color: 'hsl(var(--primary))' }} />
+              <Typography variant="h6" fontWeight="bold">
+                {selectedMensagem?.title || 'Sem título'}
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setSelectedMensagem(null)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            {selectedMensagem && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Info */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  <Chip label={selectedMensagem.instancia} size="small" variant="outlined" />
+                  <Chip label={`${selectedMensagem.phones.length} contatos`} size="small" color="primary" />
+                  {selectedMensagem.media_type && (
+                    <Chip 
+                      label={selectedMensagem.media_type} 
+                      size="small" 
+                      color="info"
+                      icon={selectedMensagem.media_type === 'image' ? <ImageIcon /> : <VideocamIcon />}
+                    />
+                  )}
+                </Box>
+
+                {/* Data */}
+                <Typography variant="caption" sx={{ color: 'hsl(var(--muted-foreground))' }}>
+                  Enviado em: {formatDate(selectedMensagem.created_at)}
+                </Typography>
+
+                {/* Mensagem */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+                    Mensagem
+                  </Typography>
+                  <Paper sx={{ 
+                    p: 2, 
+                    bgcolor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 2,
+                  }}>
+                    <Typography sx={{ whiteSpace: 'pre-wrap', color: 'hsl(var(--foreground))' }}>
+                      {selectedMensagem.text}
+                    </Typography>
+                  </Paper>
+                </Box>
+
+                {/* Mídia */}
+                {selectedMensagem.media_url && (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+                      Mídia
+                    </Typography>
+                    {selectedMensagem.media_type === 'image' ? (
+                      <Box 
+                        component="img"
+                        src={selectedMensagem.media_url}
+                        alt="Mídia"
+                        sx={{ 
+                          maxWidth: '100%', 
+                          maxHeight: 200, 
+                          borderRadius: 2,
+                          border: '1px solid hsl(var(--border))',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        component="video"
+                        src={selectedMensagem.media_url}
+                        controls
+                        sx={{ 
+                          maxWidth: '100%', 
+                          maxHeight: 200, 
+                          borderRadius: 2,
+                          border: '1px solid hsl(var(--border))',
+                        }}
+                      />
+                    )}
+                  </Box>
+                )}
+
+                {/* Lista de Contatos */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PhoneIcon fontSize="small" />
+                    Contatos Enviados ({selectedMensagem.phones.length})
+                  </Typography>
+                  <Paper sx={{ 
+                    bgcolor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 2,
+                    maxHeight: 200,
+                    overflow: 'auto',
+                  }}>
+                    <List dense>
+                      {selectedMensagem.phones.map((phone, index) => (
+                        <ListItem 
+                          key={index}
+                          sx={{
+                            borderBottom: index < selectedMensagem.phones.length - 1 ? '1px solid hsl(var(--border))' : 'none',
+                          }}
+                        >
+                          <PhoneIcon sx={{ mr: 1, fontSize: 16, color: 'hsl(var(--muted-foreground))' }} />
+                          <ListItemText 
+                            primary={phone}
+                            primaryTypographyProps={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.875rem',
+                              color: 'hsl(var(--foreground))',
+                            }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Paper>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+        </Dialog>
       </Container>
     </AppLayout>
   );
