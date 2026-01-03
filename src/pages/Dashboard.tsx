@@ -42,7 +42,7 @@ import { useServicos } from '@/hooks/useServicos';
 import { useMensagens } from '@/hooks/useMensagens';
 import AppLayout from '@/components/AppLayout';
 
-const placeholders = ['{{nome}}', '{{data}}', '{{servico}}'];
+const placeholders = ['{{nome}}', '{{data}}'];
 
 const Dashboard: React.FC = () => {
   const theme = useTheme();
