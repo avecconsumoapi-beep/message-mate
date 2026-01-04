@@ -27,6 +27,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import ImageIcon from '@mui/icons-material/Image';
@@ -49,6 +51,8 @@ const EMOJIS = ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', 
 
 const MensagensMassa = () => {
   const { toast } = useToast();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const fileInputRef = useRef<HTMLInputElement>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
   
@@ -348,14 +352,22 @@ const MensagensMassa = () => {
 
   return (
     <AppLayout>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h4" sx={{ color: 'hsl(var(--foreground))', fontWeight: 700, mb: 4 }}>
-          Mensagens em Massa - WhatsApp
+      <Container maxWidth="lg" sx={{ py: { xs: 2, md: 4 }, px: { xs: 2, md: 3 } }}>
+        <Typography 
+          variant={isMobile ? 'h5' : 'h4'} 
+          sx={{ 
+            color: 'hsl(var(--foreground))', 
+            fontWeight: 700, 
+            mb: { xs: 2, md: 4 },
+            fontSize: { xs: '1.25rem', md: '2rem' },
+          }}
+        >
+          Mensagens em Massa
         </Typography>
 
-        <Box sx={{ display: 'grid', gap: 4, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
+        <Box sx={{ display: 'grid', gap: { xs: 2, md: 4 }, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
           {/* Form */}
-          <Paper sx={{ p: { xs: 2, md: 4 }, bgcolor: 'hsl(var(--card))', borderRadius: 3 }}>
+          <Paper sx={{ p: { xs: 2, md: 4 }, bgcolor: 'hsl(var(--card))', borderRadius: { xs: 2, md: 3 } }}>
             {/* Limite de mensagens */}
             {!canSendMore && (
               <Alert severity="warning" sx={{ mb: 3 }}>
@@ -369,9 +381,9 @@ const MensagensMassa = () => {
             )}
 
             {/* Seleção de Instância */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
               <FormControl fullWidth size="small">
-                <InputLabel sx={{ color: 'hsl(var(--foreground))' }}>
+                <InputLabel sx={{ color: 'hsl(var(--foreground))', fontSize: { xs: '0.8rem', md: '1rem' } }}>
                   Selecionar Instância
                 </InputLabel>
                 <Select
@@ -381,6 +393,7 @@ const MensagensMassa = () => {
                   sx={{
                     bgcolor: 'hsl(var(--background))',
                     color: 'hsl(var(--foreground))',
+                    fontSize: { xs: '0.85rem', md: '1rem' },
                     '& .MuiOutlinedInput-notchedOutline': { borderColor: 'hsl(var(--border))' },
                   }}
                 >
@@ -391,9 +404,9 @@ const MensagensMassa = () => {
             </Box>
 
             {/* Título da Mensagem */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="subtitle2" sx={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}>
+                <Typography variant="subtitle2" sx={{ color: 'hsl(var(--foreground))', fontWeight: 600, fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                   Título da Mensagem
                 </Typography>
                 <IconButton 
@@ -418,6 +431,7 @@ const MensagensMassa = () => {
                   '& .MuiInputBase-input': {
                     color: 'hsl(var(--foreground))',
                     fontWeight: 600,
+                    fontSize: { xs: '0.85rem', md: '1rem' },
                   },
                 }}
               />
@@ -429,9 +443,9 @@ const MensagensMassa = () => {
             </Box>
 
             {/* Mensagem */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="subtitle2" sx={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}>
+                <Typography variant="subtitle2" sx={{ color: 'hsl(var(--foreground))', fontWeight: 600, fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                   Mensagem
                 </Typography>
                 <IconButton 
@@ -445,7 +459,7 @@ const MensagensMassa = () => {
               <TextField
                 fullWidth
                 multiline
-                rows={4}
+                rows={isMobile ? 3 : 4}
                 size="small"
                 value={mensagem}
                 onChange={(e) => setMensagem(e.target.value)}
@@ -455,7 +469,7 @@ const MensagensMassa = () => {
                     bgcolor: 'hsl(var(--background))',
                     '& fieldset': { borderColor: 'hsl(var(--border))' },
                   },
-                  '& .MuiInputBase-input': { color: 'hsl(var(--foreground))' },
+                  '& .MuiInputBase-input': { color: 'hsl(var(--foreground))', fontSize: { xs: '0.85rem', md: '1rem' } },
                 }}
               />
               <EmojiPopover 
@@ -466,8 +480,8 @@ const MensagensMassa = () => {
             </Box>
 
             {/* Upload de Contatos */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ color: 'hsl(var(--foreground))', mb: 1, fontWeight: 600 }}>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
+              <Typography variant="subtitle2" sx={{ color: 'hsl(var(--foreground))', mb: 1, fontWeight: 600, fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                 Lista de Contatos (Excel)
               </Typography>
               
@@ -504,8 +518,8 @@ const MensagensMassa = () => {
             </Box>
 
             {/* Upload de Mídia */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ color: 'hsl(var(--foreground))', mb: 1, fontWeight: 600 }}>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
+              <Typography variant="subtitle2" sx={{ color: 'hsl(var(--foreground))', mb: 1, fontWeight: 600, fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                 Mídia (opcional)
               </Typography>
               
@@ -586,14 +600,15 @@ const MensagensMassa = () => {
             <Button
               fullWidth
               variant="contained"
-              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SendIcon />}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: { xs: 18, md: 22 } }} />}
               onClick={handleEnviar}
               disabled={loading || !canSendMore}
               sx={{
                 bgcolor: '#25D366',
                 color: '#fff',
-                py: 1.5,
+                py: { xs: 1, md: 1.5 },
                 fontWeight: 600,
+                fontSize: { xs: '0.85rem', md: '1rem' },
                 '&:hover': { bgcolor: '#128C7E' },
                 '&:disabled': { bgcolor: '#25D366', opacity: 0.7 },
               }}
@@ -603,11 +618,11 @@ const MensagensMassa = () => {
           </Paper>
 
           {/* Histórico */}
-          <Paper sx={{ p: { xs: 2, md: 4 }, bgcolor: 'hsl(var(--card))', borderRadius: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <HistoryIcon sx={{ color: 'hsl(var(--primary))' }} />
-              <Typography variant="h6" sx={{ color: 'hsl(var(--foreground))', fontWeight: 700 }}>
-                Histórico de Envios
+          <Paper sx={{ p: { xs: 2, md: 4 }, bgcolor: 'hsl(var(--card))', borderRadius: { xs: 2, md: 3 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+              <HistoryIcon sx={{ color: 'hsl(var(--primary))', fontSize: { xs: 20, md: 24 } }} />
+              <Typography variant="h6" sx={{ color: 'hsl(var(--foreground))', fontWeight: 700, fontSize: { xs: '1rem', md: '1.25rem' } }}>
+                Histórico
               </Typography>
               <Chip 
                 label={`${mensagens.length}/${maxMensagens}`} 
@@ -618,18 +633,18 @@ const MensagensMassa = () => {
             <Divider sx={{ mb: 2, borderColor: 'hsl(var(--border))' }} />
 
             {loadingMensagens ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress />
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: { xs: 2, md: 4 } }}>
+                <CircularProgress size={isMobile ? 24 : 40} />
               </Box>
             ) : mensagens.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <HistoryIcon sx={{ fontSize: 48, color: 'hsl(var(--muted-foreground))', mb: 1 }} />
-                <Typography color="text.secondary">
+              <Box sx={{ textAlign: 'center', py: { xs: 2, md: 4 } }}>
+                <HistoryIcon sx={{ fontSize: { xs: 36, md: 48 }, color: 'hsl(var(--muted-foreground))', mb: 1 }} />
+                <Typography color="text.secondary" sx={{ fontSize: { xs: '0.85rem', md: '1rem' } }}>
                   Nenhuma mensagem enviada ainda
                 </Typography>
               </Box>
             ) : (
-              <List sx={{ maxHeight: 500, overflow: 'auto' }}>
+              <List sx={{ maxHeight: { xs: 300, md: 500 }, overflow: 'auto' }}>
                 {mensagens.map((msg) => (
                   <ListItem
                     key={msg.id}
@@ -652,17 +667,18 @@ const MensagensMassa = () => {
                       <ListItemText
                         primary={
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
-                            <Typography fontWeight="bold" sx={{ color: 'hsl(var(--foreground))' }}>
+                            <Typography fontWeight="bold" sx={{ color: 'hsl(var(--foreground))', fontSize: { xs: '0.85rem', md: '1rem' } }}>
                               {msg.title || 'Sem título'}
                             </Typography>
-                            <Chip label={msg.instancia} size="small" variant="outlined" />
-                            <Chip label={`${msg.phones.length} contatos`} size="small" color="primary" />
+                            <Chip label={msg.instancia} size="small" variant="outlined" sx={{ fontSize: { xs: '0.65rem', md: '0.75rem' } }} />
+                            <Chip label={`${msg.phones.length}`} size="small" color="primary" sx={{ fontSize: { xs: '0.65rem', md: '0.75rem' } }} />
                             {msg.media_type && (
                               <Chip 
-                                label={msg.media_type} 
+                                label={isMobile ? '' : msg.media_type} 
                                 size="small" 
                                 color="info"
-                                icon={msg.media_type === 'image' ? <ImageIcon /> : <VideocamIcon />}
+                                icon={msg.media_type === 'image' ? <ImageIcon sx={{ fontSize: 14 }} /> : <VideocamIcon sx={{ fontSize: 14 }} />}
+                                sx={{ fontSize: { xs: '0.65rem', md: '0.75rem' } }}
                               />
                             )}
                           </Box>
@@ -677,13 +693,14 @@ const MensagensMassa = () => {
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 display: '-webkit-box',
-                                WebkitLineClamp: 2,
+                                WebkitLineClamp: isMobile ? 1 : 2,
                                 WebkitBoxOrient: 'vertical',
+                                fontSize: { xs: '0.75rem', md: '0.875rem' },
                               }}
                             >
                               {msg.text}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: 'hsl(var(--muted-foreground))', mt: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ color: 'hsl(var(--muted-foreground))', mt: 0.5, display: 'block', fontSize: { xs: '0.65rem', md: '0.75rem' } }}>
                               {formatDate(msg.created_at)}
                             </Typography>
                           </>
@@ -715,11 +732,13 @@ const MensagensMassa = () => {
           onClose={() => setSelectedMensagem(null)}
           maxWidth="sm"
           fullWidth
+          fullScreen={isMobile}
           PaperProps={{
             sx: {
               bgcolor: 'hsl(var(--card))',
               color: 'hsl(var(--foreground))',
-              maxHeight: '90vh',
+              maxHeight: isMobile ? '100vh' : '90vh',
+              m: isMobile ? 0 : 2,
             }
           }}
         >
@@ -729,10 +748,11 @@ const MensagensMassa = () => {
             alignItems: 'center',
             borderBottom: '1px solid hsl(var(--border))',
             pb: 2,
+            px: { xs: 2, md: 3 },
           }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <HistoryIcon sx={{ color: 'hsl(var(--primary))' }} />
-              <Typography variant="h6" fontWeight="bold">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
+              <HistoryIcon sx={{ color: 'hsl(var(--primary))', fontSize: { xs: 20, md: 24 }, flexShrink: 0 }} />
+              <Typography variant="h6" fontWeight="bold" noWrap sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
                 {selectedMensagem?.title || 'Sem título'}
               </Typography>
             </Box>
@@ -740,7 +760,7 @@ const MensagensMassa = () => {
               <CloseIcon />
             </IconButton>
           </DialogTitle>
-          <DialogContent sx={{ pt: 3 }}>
+          <DialogContent sx={{ pt: 3, px: { xs: 2, md: 3 } }}>
             {selectedMensagem && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {/* Info */}
