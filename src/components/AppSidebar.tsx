@@ -11,6 +11,8 @@ import {
   Typography,
   Divider,
   IconButton,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -20,10 +22,12 @@ import {
   Send,
   Menu as MenuIcon,
   ChevronLeft,
+  Close,
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 
-const drawerWidth = 260;
+const drawerWidthOpen = 240;
+const drawerWidthClosed = 64;
 
 interface AppSidebarProps {
   open: boolean;
@@ -40,10 +44,14 @@ const AppSidebar = ({ open, onClose, onToggle }: AppSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleNavigation = (path: string) => {
     navigate(path);
-    onClose();
+    if (isMobile) {
+      onClose();
+    }
   };
 
   const handleLogout = () => {
@@ -51,33 +59,19 @@ const AppSidebar = ({ open, onClose, onToggle }: AppSidebarProps) => {
     navigate('/');
   };
 
-  return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: open ? drawerWidth : 72,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: open ? drawerWidth : 72,
-          boxSizing: 'border-box',
-          background: 'linear-gradient(180deg, #0d9488 0%, #0891b2 100%)',
-          color: 'white',
-          transition: 'width 0.3s ease',
-          overflowX: 'hidden',
-        },
-      }}
-    >
-      <Toolbar sx={{ justifyContent: open ? 'space-between' : 'center', px: open ? 2 : 1 }}>
+  const drawerContent = (
+    <>
+      <Toolbar sx={{ justifyContent: open ? 'space-between' : 'center', px: open ? 2 : 1, minHeight: { xs: 56, md: 64 } }}>
         {open && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Send />
-            <Typography variant="h6" noWrap fontWeight="bold">
+            <Send sx={{ fontSize: { xs: 20, md: 24 } }} />
+            <Typography variant="h6" noWrap fontWeight="bold" sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
               MessageFlow
             </Typography>
           </Box>
         )}
-        <IconButton onClick={onToggle} sx={{ color: 'white' }}>
-          {open ? <ChevronLeft /> : <MenuIcon />}
+        <IconButton onClick={isMobile ? onClose : onToggle} sx={{ color: 'white' }}>
+          {isMobile ? <Close /> : (open ? <ChevronLeft /> : <MenuIcon />)}
         </IconButton>
       </Toolbar>
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)' }} />
@@ -97,12 +91,20 @@ const AppSidebar = ({ open, onClose, onToggle }: AppSidebarProps) => {
                   },
                   justifyContent: open ? 'flex-start' : 'center',
                   px: open ? 2 : 1,
+                  py: { xs: 1, md: 1.5 },
                 }}
               >
                 <ListItemIcon sx={{ color: 'white', minWidth: open ? 40 : 'auto' }}>
-                  <item.icon />
+                  <item.icon sx={{ fontSize: { xs: 20, md: 24 } }} />
                 </ListItemIcon>
-                {open && <ListItemText primary={item.title} />}
+                {open && (
+                  <ListItemText 
+                    primary={item.title} 
+                    primaryTypographyProps={{ 
+                      fontSize: { xs: '0.85rem', md: '0.95rem' } 
+                    }} 
+                  />
+                )}
               </ListItemButton>
             </ListItem>
           );
@@ -111,9 +113,18 @@ const AppSidebar = ({ open, onClose, onToggle }: AppSidebarProps) => {
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)' }} />
       
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: { xs: 1.5, md: 2 } }}>
         {open && (
-          <Typography variant="body2" sx={{ opacity: 0.8, mb: 1, textAlign: 'center' }} noWrap>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              opacity: 0.8, 
+              mb: 1, 
+              textAlign: 'center',
+              fontSize: { xs: '0.75rem', md: '0.875rem' },
+            }} 
+            noWrap
+          >
             {user?.email}
           </Typography>
         )}
@@ -126,14 +137,70 @@ const AppSidebar = ({ open, onClose, onToggle }: AppSidebarProps) => {
             },
             justifyContent: open ? 'flex-start' : 'center',
             px: open ? 2 : 1,
+            py: { xs: 1, md: 1.5 },
           }}
         >
           <ListItemIcon sx={{ color: 'white', minWidth: open ? 40 : 'auto' }}>
-            <Logout />
+            <Logout sx={{ fontSize: { xs: 20, md: 24 } }} />
           </ListItemIcon>
-          {open && <ListItemText primary="Sair" />}
+          {open && (
+            <ListItemText 
+              primary="Sair" 
+              primaryTypographyProps={{ 
+                fontSize: { xs: '0.85rem', md: '0.95rem' } 
+              }} 
+            />
+          )}
         </ListItemButton>
       </Box>
+    </>
+  );
+
+  // Mobile: temporary drawer (overlay)
+  if (isMobile) {
+    return (
+      <Drawer
+        variant="temporary"
+        open={open}
+        onClose={onClose}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          '& .MuiDrawer-paper': {
+            width: drawerWidthOpen,
+            boxSizing: 'border-box',
+            background: 'linear-gradient(180deg, #0d9488 0%, #0891b2 100%)',
+            color: 'white',
+          },
+          '& .MuiBackdrop-root': {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+    );
+  }
+
+  // Desktop: permanent drawer
+  return (
+    <Drawer
+      variant="permanent"
+      sx={{
+        width: open ? drawerWidthOpen : drawerWidthClosed,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: open ? drawerWidthOpen : drawerWidthClosed,
+          boxSizing: 'border-box',
+          background: 'linear-gradient(180deg, #0d9488 0%, #0891b2 100%)',
+          color: 'white',
+          transition: 'width 0.3s ease',
+          overflowX: 'hidden',
+        },
+      }}
+    >
+      {drawerContent}
     </Drawer>
   );
 };
