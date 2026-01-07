@@ -85,11 +85,29 @@ const MensagensMassa = () => {
     setMensagem(prev => prev + emoji);
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
     const file = event.target.files?.[0];
     if (file) {
-      const preview = URL.createObjectURL(file);
-      setMedia({ file, type, preview });
+      try {
+        const { convertMediaToStandardFormat } = await import('@/utils/mediaConverter');
+        const convertedFile = await convertMediaToStandardFormat(file, type);
+        const preview = URL.createObjectURL(convertedFile);
+        setMedia({ file: convertedFile, type, preview });
+        
+        if (file.name !== convertedFile.name) {
+          toast({
+            title: 'Arquivo convertido',
+            description: type === 'image' ? 'Imagem convertida para PNG' : 'Vídeo convertido para MP4',
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao converter arquivo:', error);
+        toast({
+          title: 'Erro',
+          description: 'Falha ao converter arquivo',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
