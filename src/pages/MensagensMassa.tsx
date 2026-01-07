@@ -35,6 +35,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
+import CancelIcon from '@mui/icons-material/Cancel';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import ContactsIcon from '@mui/icons-material/Contacts';
 import HistoryIcon from '@mui/icons-material/History';
@@ -44,6 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/components/AppLayout';
 import { parseAndNormalizePhones } from '@/utils/phoneUtils';
 import { useMensagensMassa } from '@/hooks/useMensagensMassa';
+import { useEnvioMassa } from '@/hooks/useEnvioMassa';
 import { MensagemMassa } from '@/types/MensagemMassa';
 import { supabase } from '@/lib/supabase';
 
@@ -65,6 +67,13 @@ const MensagensMassa = () => {
     remainingSlots,
     maxMensagens 
   } = useMensagensMassa();
+
+  const {
+    uiState,
+    loading: loadingEnvio,
+    iniciarEnvio,
+    solicitarCancelamento,
+  } = useEnvioMassa();
   
   const [titulo, setTitulo] = useState('');
   const [mensagem, setMensagem] = useState('');
@@ -267,6 +276,14 @@ const MensagensMassa = () => {
     
     setLoading(true);
 
+    // Marcar como enviando no banco
+    const { error: envioError } = await iniciarEnvio();
+    if (envioError) {
+      toast({ title: 'Erro', description: envioError, variant: 'destructive' });
+      setLoading(false);
+      return;
+    }
+
     try {
       let mediaUrl: string | null = null;
       let mediaType: 'image' | 'video' | null = null;
@@ -325,6 +342,15 @@ const MensagensMassa = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelar = async () => {
+    const { error } = await solicitarCancelamento();
+    if (error) {
+      toast({ title: 'Erro', description: error, variant: 'destructive' });
+    } else {
+      toast({ title: 'Cancelamento solicitado', description: 'Aguarde a finalização segura do envio...' });
     }
   };
 
@@ -614,25 +640,63 @@ const MensagensMassa = () => {
               )}
             </Box>
 
-            {/* Botão Enviar */}
-            <Button
-              fullWidth
-              variant="contained"
-              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: { xs: 18, md: 22 } }} />}
-              onClick={handleEnviar}
-              disabled={loading || !canSendMore}
-              sx={{
-                bgcolor: '#25D366',
-                color: '#fff',
-                py: { xs: 1, md: 1.5 },
-                fontWeight: 600,
-                fontSize: { xs: '0.85rem', md: '1rem' },
-                '&:hover': { bgcolor: '#128C7E' },
-                '&:disabled': { bgcolor: '#25D366', opacity: 0.7 },
-              }}
-            >
-              {loading ? 'Preparando...' : 'Enviar em Massa'}
-            </Button>
+            {/* Botão Enviar / Cancelar / Loading */}
+            {loadingEnvio ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : uiState === 'cancelando' ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, py: 2 }}>
+                <CircularProgress size={24} />
+                <Typography sx={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.875rem' }}>
+                  Cancelando envio...
+                </Typography>
+              </Box>
+            ) : uiState === 'enviando' ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <CircularProgress size={20} />
+                  <Typography sx={{ color: 'hsl(var(--foreground))', fontWeight: 500 }}>
+                    Envio em andamento...
+                  </Typography>
+                </Box>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  startIcon={<CancelIcon sx={{ fontSize: { xs: 18, md: 22 } }} />}
+                  onClick={handleCancelar}
+                  sx={{
+                    bgcolor: 'hsl(var(--destructive))',
+                    color: 'hsl(var(--destructive-foreground))',
+                    py: { xs: 1, md: 1.5 },
+                    fontWeight: 600,
+                    fontSize: { xs: '0.85rem', md: '1rem' },
+                    '&:hover': { bgcolor: 'hsl(var(--destructive) / 0.9)' },
+                  }}
+                >
+                  Cancelar Envio
+                </Button>
+              </Box>
+            ) : (
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: { xs: 18, md: 22 } }} />}
+                onClick={handleEnviar}
+                disabled={loading || !canSendMore}
+                sx={{
+                  bgcolor: '#25D366',
+                  color: '#fff',
+                  py: { xs: 1, md: 1.5 },
+                  fontWeight: 600,
+                  fontSize: { xs: '0.85rem', md: '1rem' },
+                  '&:hover': { bgcolor: '#128C7E' },
+                  '&:disabled': { bgcolor: '#25D366', opacity: 0.7 },
+                }}
+              >
+                {loading ? 'Preparando...' : 'Enviar em Massa'}
+              </Button>
+            )}
           </Paper>
 
           {/* Histórico */}
