@@ -74,6 +74,7 @@ export const useMensagensMassa = () => {
         text,
         media_url: mediaUrl,
         media_type: mediaType,
+        status: 'enviando',
       })
       .select()
       .single();
