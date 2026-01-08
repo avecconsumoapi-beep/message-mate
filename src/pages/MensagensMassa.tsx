@@ -764,6 +764,23 @@ const MensagensMassa = () => {
                                 sx={{ fontSize: { xs: '0.65rem', md: '0.75rem' } }}
                               />
                             )}
+                            {msg.status === 'cancelado' && (
+                              <Chip 
+                                label={isMobile ? '' : 'Cancelado'} 
+                                size="small" 
+                                color="error"
+                                icon={<CancelIcon sx={{ fontSize: 14 }} />}
+                                sx={{ fontSize: { xs: '0.65rem', md: '0.75rem' } }}
+                              />
+                            )}
+                            {msg.status === 'enviando' && (
+                              <Chip 
+                                label={isMobile ? '' : 'Enviando...'} 
+                                size="small" 
+                                color="warning"
+                                sx={{ fontSize: { xs: '0.65rem', md: '0.75rem' } }}
+                              />
+                            )}
                           </Box>
                         }
                         secondary={
