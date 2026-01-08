@@ -10,9 +10,18 @@ export const useMensagensMassa = () => {
 
   const fetchMensagens = useCallback(async () => {
     setLoading(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setMensagens([]);
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('mensagens_massa')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -50,9 +59,15 @@ export const useMensagensMassa = () => {
       return { error: `Limite de ${MAX_MENSAGENS} mensagens atingido. Exclua algumas mensagens do histórico para continuar.` };
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { error: 'Usuário não autenticado' };
+    }
+
     const { data, error } = await supabase
       .from('mensagens_massa')
       .insert({
+        user_id: user.id,
         instancia,
         phones,
         title,

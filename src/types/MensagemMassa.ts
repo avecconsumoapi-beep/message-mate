@@ -1,5 +1,6 @@
 export interface MensagemMassa {
   id: string;
+  user_id: string;
   instancia: string;
   phones: string[];
   title: string;
