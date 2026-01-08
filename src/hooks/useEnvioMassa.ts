@@ -84,7 +84,7 @@ export const useEnvioMassa = () => {
   }, [state.enviando, state.cancelando, startPolling, stopPolling]);
 
   // Inicia o envio: seta enviando=true, cancelando=false
-  const iniciarEnvio = async (): Promise<{ error?: string }> => {
+  const iniciarEnvio = async (): Promise<{ error?: string; userId?: string }> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Usuário não autenticado' };
 
@@ -104,7 +104,7 @@ export const useEnvioMassa = () => {
     }
 
     setState({ enviando: true, cancelando: false });
-    return {};
+    return { userId: user.id };
   };
 
   // Solicita cancelamento: seta cancelando=true (mantém enviando=true)
