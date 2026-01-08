@@ -293,12 +293,27 @@ const MensagensMassa = () => {
         mediaType = media.type;
       }
 
+      // Primeiro cria a mensagem na tabela para obter o ID
+      const { data: mensagemCriada, error: saveError } = await createMensagem(
+        instancia,
+        phones,
+        titulo.trim() || 'Sem título',
+        mensagem,
+        mediaUrl,
+        mediaType
+      );
+
+      if (saveError || !mensagemCriada) {
+        throw new Error(saveError || 'Erro ao criar mensagem');
+      }
+
       const payload = {
         job_id: crypto.randomUUID(),
         user_id: userId,
+        mensagem_id: mensagemCriada.id,
         instancia: instancia,
         message: {
-          id: crypto.randomUUID(),
+          id: mensagemCriada.id,
           title: titulo.trim() || null,
           text: mensagem,
           media_url: mediaUrl,
@@ -309,20 +324,6 @@ const MensagensMassa = () => {
       
       const result = await sendToN8n(payload);
       console.log('[N8N] Resultado:', result);
-
-      // Save to Supabase
-      const { error: saveError } = await createMensagem(
-        instancia,
-        phones,
-        titulo.trim() || 'Sem título',
-        mensagem,
-        mediaUrl,
-        mediaType
-      );
-
-      if (saveError) {
-        console.error('Erro ao salvar mensagem:', saveError);
-      }
 
       toast({ 
         title: 'Enviado!', 
