@@ -277,7 +277,7 @@ const MensagensMassa = () => {
     setLoading(true);
 
     // Marcar como enviando no banco
-    const { error: envioError } = await iniciarEnvio();
+    const { error: envioError, userId } = await iniciarEnvio();
     if (envioError) {
       toast({ title: 'Erro', description: envioError, variant: 'destructive' });
       setLoading(false);
@@ -295,6 +295,7 @@ const MensagensMassa = () => {
 
       const payload = {
         job_id: crypto.randomUUID(),
+        user_id: userId,
         instancia: instancia,
         message: {
           id: crypto.randomUUID(),
