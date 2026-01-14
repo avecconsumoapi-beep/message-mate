@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -59,6 +59,7 @@ const Dashboard: React.FC = () => {
   const [tipoMidia, setTipoMidia] = useState<'imagem' | 'video' | ''>('');
   const [arquivo, setArquivo] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const templateInputRef = useRef<HTMLInputElement>(null);
   
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -91,9 +92,23 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const insertPlaceholder = (placeholder: string) => {
-    setTemplate(prev => prev + placeholder);
-  };
+  const insertPlaceholder = useCallback((placeholder: string) => {
+    const input = templateInputRef.current;
+    if (input) {
+      const start = input.selectionStart ?? template.length;
+      const end = input.selectionEnd ?? template.length;
+      const newValue = template.substring(0, start) + placeholder + template.substring(end);
+      setTemplate(newValue);
+      // Restaurar cursor após inserção
+      setTimeout(() => {
+        input.focus();
+        const newPos = start + placeholder.length;
+        input.setSelectionRange(newPos, newPos);
+      }, 0);
+    } else {
+      setTemplate(prev => prev + placeholder);
+    }
+  }, [template]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -225,6 +240,7 @@ const Dashboard: React.FC = () => {
                 sx={{ mb: 2 }}
                 placeholder="Olá {{nome}}, seu agendamento para {{data}} foi confirmado..."
                 size={isMobile ? 'small' : 'medium'}
+                inputRef={templateInputRef}
               />
 
               {/* File Upload */}
